@@ -174,7 +174,7 @@ getDailyMeanTS_test() ->
   ?assertEqual(300.0,pollution_server:getDailyMean("PM30",{2018,5,10})),
   pollution_server:stop().
 
-getAirQualityIndexPrivate_test() ->
+getAirQualityIndex_test() ->
   pollution_server:start(),
   pollution_server:addStation("Station1",{0.3,0.3}),
   pollution_server:addValue("Station1",{{2018,5,10},{16,18,0}},"PM10",300),
@@ -183,7 +183,7 @@ getAirQualityIndexPrivate_test() ->
   ?assertEqual(400.0,pollution_server:getAirQualityIndex("Station1",{{2018,5,10},16},#{"PM10" => 100, "PM2.5" => 60})),
   pollution_server:stop().
 
-getAirQualityIndexPrivateTS_test() ->
+getAirQualityIndexTS_test() ->
   pollution_server:start(),
   pollution_server:addStation("Station2",{0.3,0.3}),
   pollution_server:addValue("Station2",{{2018,5,10},{16,18,0}},"PM10",300),
@@ -192,7 +192,7 @@ getAirQualityIndexPrivateTS_test() ->
   ?assertEqual(1600.0,pollution_server:getAirQualityIndex("Station2",{{2018,5,10},16},#{"PM10" => 100, "PM2.5" => 50})),
   pollution_server:stop().
 
-getAirQualityIndexPrivateNN_test() ->
+getAirQualityIndexNN_test() ->
   pollution_server:start(),
   pollution_server:addStation("Station1",{0.3,0.3}),
   pollution_server:addValue("Station1",{{2018,5,10},{16,18,0}},"PM",300),
@@ -201,7 +201,7 @@ getAirQualityIndexPrivateNN_test() ->
   ?assertEqual(normError,pollution_server:getAirQualityIndex("Station1",{{2018,5,10},16},#{"PM10" => 100, "PM2.5" => 60})),
   pollution_server:stop().
 
-getAirQualityIndexPrivateDD_test() ->
+getAirQualityIndexDD_test() ->
   pollution_server:start(),
   pollution_server:addStation("Station1",{0.3,0.3}),
   pollution_server:addValue("Station1",{{2018,5,10},{16,18,0}},"PM10",300),
@@ -211,4 +211,18 @@ getAirQualityIndexPrivateDD_test() ->
   pollution_server:addValue("Station1",{{2018,5,10},{16,58,0}},"PM2.5",400),
   pollution_server:addValue("Station1",{{2018,5,10},{16,48,0}},"PM2.5",500),
   ?assertEqual(800.0,pollution_server:getAirQualityIndex("Station1",{{2018,5,10},16},#{"PM10" => 100, "PM2.5" => 50})),
+  pollution_server:stop().
+
+getAirQualityIndexNIV_test() ->
+  pollution_server:start(),
+  pollution_server:addStation("Station1",{0.3,0.3}),
+  pollution_server:addValue("Station1",{{2018,5,10},{16,18,0}},"PM",300),
+  pollution_server:addValue("Station1",{{2018,5,10},{16,58,0}},"PM",400),
+  pollution_server:addValue("Station1",{{2018,5,10},{16,48,0}},"PM",500),
+  ?assertEqual(noResult,pollution_server:getAirQualityIndex("Station1",{{2000,5,10},16},#{"PM10" => 100, "PM2.5" => 60})),
+  pollution_server:stop().
+
+getAirQualityIndexNIVXS_test() ->
+  pollution_server:start(),
+  ?assertEqual(stationDoesNotExist,pollution_server:getAirQualityIndex("Station1",{{2000,5,10},16},#{"PM10" => 100, "PM2.5" => 60})),
   pollution_server:stop().
