@@ -12,7 +12,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0,stop/0,addStation/2,addValue/4,removeValue/3,getOneValue/3,getStationMean/2,getDailyMean/2,getAirQualityIndex/3]).
+-export([start_link/0,stop/0,addStation/2,addValue/4,removeValue/3,getOneValue/3,getStationMean/2,getDailyMean/2,getAirQualityIndex/3,crash/0]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -36,6 +36,9 @@ start_link() ->
 
 stop() ->
   gen_server:cast(pollution_gen_server,stop).
+
+crash() ->
+  gen_server:cast(pollution_gen_server,crash).
 
 addStation(Name,{Latitude,Longitude}) ->
   gen_server:call(pollution_gen_server,{addStation,{Name,{Latitude,Longitude}}}).
@@ -146,8 +149,11 @@ handle_call({getAirQualityIndex,{Id,{Date,Hour},NormMap}}, _From, State) ->
   {noreply, NewState :: #monitor{}, timeout() | hibernate} |
   {stop, Reason :: term(), NewState :: #monitor{}}).
 handle_cast(stop, State) ->
-  {stop, normal, State}.
+  {stop, normal, State};
 
+handle_cast(crash, State) ->
+  crashPrivate(),
+  {noreply, State}.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -200,7 +206,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-
+crashPrivate() -> 1/0.
 
 isValidStationPrivate(Monitor,Name,{Latitude,Longitude}) ->
   maps:is_key(Name,Monitor#monitor.nameKeys)
