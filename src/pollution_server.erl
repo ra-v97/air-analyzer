@@ -10,7 +10,7 @@
 -author("rafstach").
 
 %% API
--export([start/0,stop/0,addStation/2,addValue/4,removeValue/3,getOneValue/3,getStationMean/2,getDailyMean/2,getAirQualityIndex/3]).
+-export([init/0,start/0,stop/0,addStation/2,addValue/4,removeValue/3,getOneValue/3,getStationMean/2,getDailyMean/2,getAirQualityIndex/3]).
 
 
 -record(monitor,{stations =#{},nameKeys=#{},cordKeys=#{}}).
@@ -24,6 +24,7 @@ start() ->
 stop() ->
   pollutionServer ! {stop, self()},
   ok.
+
 
 addStation(Name,{Latitude,Longitude}) ->
   pollutionServer ! {addStation,{Name,Latitude,Longitude},self()},
@@ -108,9 +109,9 @@ loop(Monitor) ->
   receive
 
     {addStation,{Name,Latitude,Longitude},ClientPid} ->
-        {I,NewMonitor} = addStationPrivate(Monitor,Name,{Latitude,Longitude}),
-        ClientPid ! {responseM,{I,NewMonitor}},
-        loop(NewMonitor);
+      {I,NewMonitor} = addStationPrivate(Monitor,Name,{Latitude,Longitude}),
+      ClientPid ! {responseM,{I,NewMonitor}},
+      loop(NewMonitor);
 
     {addValue,{Id,Date,Type,Value}, ClientPid} ->
       {I,NewMonitor} =  addValuePrivate(Monitor,Id,Date,Type,Value),
