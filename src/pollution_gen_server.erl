@@ -12,7 +12,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0,stop/0,addStation/2,addValue/4,removeValue/3,getOneValue/3,getStationMean/2,getDailyMean/2,getAirQualityIndex/3,crash/0]).
+-export([start_link/1,stop/0,addStation/2,addValue/4,removeValue/3,getOneValue/3,getStationMean/2,getDailyMean/2,getAirQualityIndex/3,crash/0]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -31,8 +31,8 @@
 %%%===================================================================
 
 
-start_link() ->
-  gen_server:start_link({local, pollution_gen_server}, ?MODULE, [], []).
+start_link(Data) ->
+  gen_server:start_link({local, pollution_gen_server}, ?MODULE, Data, []).
 
 stop() ->
   gen_server:cast(pollution_gen_server,stop).
@@ -80,8 +80,11 @@ getAirQualityIndex(Id,{Date,Hour},NormMap) ->
 -spec(init(Args :: term()) ->
   {ok, State :: #monitor{}} | {ok, State :: #monitor{}, timeout() | hibernate} |
   {stop, Reason :: term()} | ignore).
-init([]) ->
-  {ok, #monitor{}}.
+init(Data) ->
+  erlang:send_after(10000, self(), {save,Data}),
+  [H|[]] = ets:lookup(Data,monitor),
+  {ok, H}.
+  %{ok, #monitor{}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -109,7 +112,7 @@ handle_call({addStation,{Name,{Latitude,Longitude}}}, _From, State) ->
 handle_call({addValue,{Id,Date,Type,Value}}, _From, State) ->
   NewState = addValuePrivate(State,Id,Date,Type,Value),
   case NewState of
-    stationDoesNotExist -> {reply, stationAlreadyExists, State} ;
+    stationDoesNotExist -> {reply, stationDoesNotExist, State} ;
     measurementAlreadyExists -> {reply, measurementAlreadyExists, State} ;
     _ -> {reply, NewState, NewState}
   end;
@@ -117,7 +120,7 @@ handle_call({addValue,{Id,Date,Type,Value}}, _From, State) ->
 handle_call({removeValue,{Id,Date,Type}}, _From, State) ->
   NewState = removeValuePrivate(State,Id,Date,Type),
   case NewState of
-    stationDoesNotExist -> {reply, stationAlreadyExists, State} ;
+    stationDoesNotExist -> {reply, stationDoesNotExist, State} ;
     _ -> {reply, NewState, NewState}
   end;
 
@@ -168,7 +171,9 @@ handle_cast(crash, State) ->
   {noreply, NewState :: #monitor{}} |
   {noreply, NewState :: #monitor{}, timeout() | hibernate} |
   {stop, Reason :: term(), NewState :: #monitor{}}).
-handle_info(_Info, State) ->
+handle_info({save,Data}, State) ->
+  ets:insert(Data,State),
+  erlang:send_after(1000, self(), {save,Data}),
   {noreply, State}.
 
 %%--------------------------------------------------------------------
